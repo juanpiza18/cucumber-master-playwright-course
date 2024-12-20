@@ -12,7 +12,14 @@ After ALl: After all the exectuion last thing ... Teardown of browsers for
 // Before and After hook for Cucumber test cases
 // as we need to handle the same Page object (playwright object) accross
 // different step definitions.
-import { After, AfterAll, Before, BeforeAll } from "@cucumber/cucumber";
+import {
+  After,
+  AfterAll,
+  AfterStep,
+  Before,
+  BeforeAll,
+  Status,
+} from "@cucumber/cucumber";
 import { Browser, Page, chromium, BrowserContext } from "@playwright/test";
 import { pageFixture } from "./pageFixture";
 
@@ -34,11 +41,37 @@ Before(async function () {
   pageFixture.page = page;
 });
 
-After(async function () {
+After(async function () //{ result, pickle }
+{
+  // add screenshot for the failures scenario.
+  // get test that failed
+  /*if (result.status === Status.FAILED) {
+    const image = await pageFixture.page.screenshot({
+      path: `./test-results/screenshots/${pickle.name}.png`,
+      type: "png",
+    });
+    this.attach(image, "image/png");
+  }*/
+
+  // Screenshot after each scenario
+  /*const image = await pageFixture.page.screenshot({
+    path: `./test-results/screenshots/${pickle.name}.png`,
+    type: "png",
+  });
+  this.attach(image, "image/png");*/
   await page.close();
   await context.close();
 });
 
 AfterAll(async function () {
   await browser.close();
+});
+
+// Take a Screenshot after each step
+AfterStep(async function ({ pickle }) {
+  const image = await pageFixture.page.screenshot({
+    path: `./test-results/screenshots/${pickle.name}.png`,
+    type: "png",
+  });
+  this.attach(image, "image/png");
 });
