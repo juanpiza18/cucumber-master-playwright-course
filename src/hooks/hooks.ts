@@ -29,16 +29,29 @@ let context: BrowserContext;
 
 // We should create only one browser cause it is really expensive to create each time
 BeforeAll(async function () {
-  browser = await chromium.launch({ headless: false });
+  try {
+    console.log("Launching browser...");
+    browser = await chromium.launch({ headless: true });
+    console.log("Browser launched successfully");
+  } catch (error) {
+    console.error("Error launching browser:", error);
+    throw error;
+  }
 });
 
 // We need to use normal function declarations cause cucumber sometimes
 // throws errors with arrow functions
 Before(async function () {
-  // for each scenario it is better to create a new context instead of new browser
-  context = await browser.newContext();
-  page = await browser.newPage();
-  pageFixture.page = page;
+  try {
+    console.log("Creating browser context and page...");
+    context = await browser.newContext();
+    page = await context.newPage();
+    pageFixture.page = page; // Share page object using the fixture
+    console.log("Context and page created successfully");
+  } catch (error) {
+    console.error("Error creating context or page:", error);
+    throw error;
+  }
 });
 
 After(async function () //{ result, pickle }
@@ -59,19 +72,37 @@ After(async function () //{ result, pickle }
     type: "png",
   });
   this.attach(image, "image/png");*/
-  await page.close();
-  await context.close();
+  try {
+    console.log("Closing page and context...");
+    if (page) await page.close();
+    if (context) await context.close();
+    console.log("Page and context closed successfully");
+  } catch (error) {
+    console.error("Error during cleanup:", error);
+  }
 });
 
 AfterAll(async function () {
-  await browser.close();
+  try {
+    console.log("Closing browser...");
+    if (browser) await browser.close();
+    console.log("Browser closed successfully");
+  } catch (error) {
+    console.error("Error closing browser:", error);
+  }
 });
 
 // Take a Screenshot after each step
 AfterStep(async function ({ pickle }) {
-  const image = await pageFixture.page.screenshot({
-    path: `./test-results/screenshots/${pickle.name}.png`,
-    type: "png",
-  });
-  this.attach(image, "image/png");
+  try {
+    console.log(`Taking screenshot after step in scenario: ${pickle.name}`);
+    const image = await pageFixture.page.screenshot({
+      path: `./test-results/screenshots/${pickle.name}.png`,
+      type: "png",
+    });
+    this.attach(image, "image/png");
+    console.log("Screenshot captured");
+  } catch (error) {
+    console.error("Error taking screenshot:", error);
+  }
 });
